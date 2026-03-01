@@ -221,7 +221,7 @@ export const createSettlement = async (req, res, next) => {
       type: "settlement",
       groupId: group._id,
       groupName: group.name,
-      note: "Settled via SplitSol",
+      note: "Settled via SolShare",
     });
 
     // Use batch transaction if multiple creditors

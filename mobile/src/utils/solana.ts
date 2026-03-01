@@ -1,9 +1,5 @@
 import { transact } from "@solana-mobile/mobile-wallet-adapter-protocol-web3js";
-import {
-  Connection,
-  Transaction,
-  VersionedTransaction,
-} from "@solana/web3.js";
+import { Connection, Transaction, VersionedTransaction } from "@solana/web3.js";
 import { Buffer } from "buffer";
 import * as Linking from "expo-linking";
 
@@ -13,8 +9,8 @@ if (typeof global.Buffer === "undefined") {
 }
 
 export const APP_IDENTITY = {
-  name: "SplitSOL",
-  uri: "https://im-apratap.github.io/splitsol", // Optional: Your website
+  name: "SolShare",
+  uri: "https://im-apratap.github.io/solshare", // Optional: Your website
   icon: "favicon.ico", // Optional: Path to icon relative to uri
 };
 
