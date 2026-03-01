@@ -15,10 +15,10 @@
     "newArchEnabled": true,
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.im-apratap.splitsol"
+      "bundleIdentifier": "com.im-apratap.solshare"
     },
     "android": {
-      "package": "com.im_apratap.splitsol",
+      "package": "com.im_apratap.solshare",
       "adaptiveIcon": {
         "backgroundColor": "#E6F4FE",
         "foregroundImage": "./assets/images/android-icon-foreground.png",

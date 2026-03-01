@@ -69,7 +69,7 @@ export default function AddMemberScreen() {
         <View style={styles.header}>
           <Text style={styles.title}>Add Member</Text>
           <Text style={styles.subtitle}>
-            Invite someone to the group using their SplitSOL username.
+            Invite someone to the group using their SolShare username.
           </Text>
         </View>
 

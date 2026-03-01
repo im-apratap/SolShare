@@ -95,7 +95,7 @@ export default function HomeScreen() {
           <Text style={styles.greetingTitle}>
             Hello, {user?.name?.split(" ")[0] || "User"}
           </Text>
-          <Text style={styles.greetingSubtitle}>Welcome to SplitSOL</Text>
+          <Text style={styles.greetingSubtitle}>Welcome to SolShare</Text>
         </View>
 
         {/* Live SOL Price Banner */}

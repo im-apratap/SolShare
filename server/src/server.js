@@ -26,7 +26,7 @@ app.use(express.urlencoded({ extended: true, limit: "10mb" }));
 app.use(cookieParser());
 
 app.get("/health", (req, res) => {
-  res.json({ status: "ok", message: "splitSolana is running, hurray..." });
+  res.json({ status: "ok", message: "SolShare is running, hurray..." });
 });
 
 app.use("/api/users", userRoutes);

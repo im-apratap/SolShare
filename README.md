@@ -1,76 +1,79 @@
-# SplitSOL
+# SolShare: Solana Native Crypto Expense Splitter
 
-SplitSOL is a premium Web3 bill-splitting application built securely on the Solana blockchain. Designed with a modern, clean aesthetic, SplitSOL simplifies the process of sharing expenses with friends, family, or colleagues through transparent on-chain settlements.
+SolShare is a mobile-first application natively built on the Solana blockchain using the Solana Mobile Stack (SMS). It solves the problem of splitting fiat expenses (like dinners, rent, trips) directly into cryptocurrency, providing real-time USD/SOL pricing and executing settlements directly on-chain using the Mobile Wallet Adapter (MWA).
 
-![SplitSOL Overview](https://img.shields.io/badge/Status-Active-brightgreen)
-![Platform](https://img.shields.io/badge/Platform-iOS%20%7C%20Android-blue)
-![Backend](https://img.shields.io/badge/Backend-Bun%20%7C%20Express-black)
-![Blockchain](https://img.shields.io/badge/Blockchain-Solana%20Devnet-purple)
+## Features
 
-## 🌟 Key Features
+- **Mobile Foundation First**: Built natively using React Native and Expo. Seamlessly interacts with mobile hardware and Solana Mobile Stack features directly designed for smartphones.
+- **Smart AI Receipt Scanner**: Integration with Gemini AI allows users to instantly take a picture of a bill with their camera and dynamically prefill the expense title and split amount.
+- **On-chain Settlements & MWA Interface**: Instantly connect your phone's crypto wallet using the Solana MWA. Settle debts permissionlessly on the Solana network with full transaction verification.
+- **Real-Time Price Context**: Pulls the live price of SOL/USD on a scalable caching backend to give users immediate feedback on exact crypto equivalents of fiat debts.
+- **Full Backend Logic**: Custom Node.js Express server to handle robust group coordination, user profile matching, historical activity fetching, and push notifications.
 
-### Mobile Application (Frontend)
+## Tech Stack
 
-- **Modern Aesthetic:** A beautifully crafted, light-themed premium UI emphasizing highly rounded cards, pill buttons, and soft drop-shadows.
-- **Seamless Authentication:** Secure JWT-based login and registration flow.
-- **Group & Expense Management:** Intuitive dashboard to create groups, dynamically add members via their usernames, track balances, and add new expenses (Equal, Percentage, Custom splits) manually or automatically via **Gemini Vision AI Receipt Scanning**.
-- **Expense Control:** Full control to delete any erroneous expenses directly from the group dashboard.
-- **On-Chain Settlements:** Integrated checkout to instantly check exact owed amounts, perform live USD-to-SOL conversion, and intuitively sign/send Lamports via the Solana blockchain.
+- **Frontend App**: React Native, Expo, React Navigation
+- **Blockchain Interface**: Solana Web3.js, Solana Mobile Wallet Adapter (@solana-mobile/mobile-wallet-adapter-protocol)
+- **Backend Infrastructure**: Node.js, Express, MongoDB (Mongoose)
+- **Artificial Intelligence**: Google Gemini Vision AI (`@google/generative-ai`)
 
-### API Server (Backend)
+## Setting Up the Project Locally
 
-- **High-Performance Runtime:** Powered by Bun and Express for incredibly fast iterations and low latency.
-- **Robust Security:** JWT implementation and secure password hashing.
-- **NoSQL Database:** MongoDB integration for flexible group, user, and expense schema management.
-- **Smart Querying:** Optimized data fetching for real-time balance calculations and settlement tracking.
+### 1. Backend Server Setup
 
-## 🚀 Getting Started
+Navigate into the server directory and create your `.env` file.
 
-### Prerequisites
+```bash
+cd server
+cp .env.example .env
+npm install
+npm run dev
+```
 
-To run this full-stack application locally, you will need:
+_Required Environment Variables (`.env`):_
 
-- [Bun](https://bun.sh/) (Primary package manager and runtime)
-- [Expo CLI](https://expo.dev/) installed globally or via npx
-- A running MongoDB instance (Local or Atlas)
+```
+PORT=8000
+MONGODB_URI=your_mongodb_cluster_uri
+JWT_SECRET=your_secret_phrase
+GEMINI_API_KEY=your_gemini_api_key
+```
 
-### Installation & Setup
+### 2. Mobile App Setup
 
-1. **Clone the Repository**
+In a new terminal, navigate to the `mobile` app and install its dependencies. Ensure you configure your IP address if running physically.
 
-   ```bash
-   git clone https://github.com/im-apratap/splitSol/
-   cd splitSOL
-   ```
+```bash
+cd mobile
+cp .env.example .env
+npm install
+npx expo start -c
+```
 
-2. **Start the Backend**
-   Navigate to the `server/` directory, install dependencies, and start the development server.
+_Required Environment Variables (`.env`):_
 
-   ```bash
-   cd server
-   bun install
-   bun start
-   ```
+```
+EXPO_PUBLIC_API_URL=http://<YOUR_LOCAL_NETWORK_IP>:8000/api
+EXPO_PUBLIC_SOLANA_NETWORK=devnet
+```
 
-3. **Start the Mobile App**
-   Open a new terminal, navigate to the `mobile/` directory, install dependencies, and start Expo.
+### 3. Running on your device
 
-   ```bash
-   cd mobile
-   bun install
-   bun start
-   ```
+- **Dev mode**: Install the `Expo Go` app on your Android Phone. Scan the QR code given by `npx expo start`.
+- **Native APK Build**:
+  Since this app uses native modules (Solana MWA, Camera packages), we highly recommend building it into a standalone APK for the best performance and functionality:
+  ```bash
+  eas build -p android --profile preview
+  ```
 
-   _Use the Expo Go app on your physical device or run it on an iOS Simulator / Android Emulator._
+## Hackathon Specifics Checklist
 
-   > [!TIP]
-   > **Smart Local Networking:** The mobile app automatically routes to your local backend server! It uses `localhost` for iOS Simulators and automatically maps to `10.0.2.2` for Android Emulators out of the box.
-   >
-   > **Using a Physical Device?** Expo Go on a real phone cannot access your computer's `localhost`. Create an `.env` file in the `mobile/` directory and set `EXPO_PUBLIC_API_URL=http://<YOUR_COMPUTER_WIFI_IP>:8000/api`.
+- [x] Functional Android APK -> (`eas build`)
+- [x] Meaningful Network Interactions -> App creates live blockchain transactions.
+- [x] Built for Mobile -> Entirely native React Navigation with deep-linking protocols.
 
-## 🏗 System Architecture
+## Screenshots and Demo
 
-_This repository is structured as a monorepo containing both the backend service and the mobile client._
+<Insert Demo Video Link Here>
 
-- **`/server`**: The Bun/Express API that acts as the source of truth for all users, groups, and expenses.
-- **`/mobile`**: The Expo React Native application offering a premium interface to interact with the API and the Solana blockchain.
+<Insert Pitch Deck Link Here>
