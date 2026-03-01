@@ -12,6 +12,7 @@ import {
   getBalance,
   connection,
   getSolPriceInUSD,
+  getCachedSolPriceInUSD,
 } from "../utils/solana.js";
 import { Expo } from "expo-server-sdk";
 import { sendPushNotifications } from "../utils/notifications.js";
@@ -490,6 +491,25 @@ export const getWalletBalance = async (req, res, next) => {
     return res
       .status(200)
       .json(new ApiResponse(200, { balance, pubKey }, "Balance fetched"));
+  } catch (error) {
+    next(error);
+  }
+};
+
+// Get current SOL price in USD (cached).
+export const getSolPrice = async (req, res, next) => {
+  try {
+    const { price, updatedAt } = await getCachedSolPriceInUSD();
+
+    return res
+      .status(200)
+      .json(
+        new ApiResponse(
+          200,
+          { priceUSD: price, updatedAt },
+          "SOL price fetched",
+        ),
+      );
   } catch (error) {
     next(error);
   }

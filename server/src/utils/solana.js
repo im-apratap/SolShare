@@ -30,6 +30,25 @@ export const getSolPriceInUSD = async () => {
   }
 };
 
+// In-memory cache for SOL price (avoid hammering external APIs)
+let cachedSolPrice = { price: null, updatedAt: null };
+const CACHE_TTL_MS = 30_000; // 30 seconds
+
+export const getCachedSolPriceInUSD = async () => {
+  const now = Date.now();
+  if (
+    cachedSolPrice.price !== null &&
+    cachedSolPrice.updatedAt !== null &&
+    now - cachedSolPrice.updatedAt < CACHE_TTL_MS
+  ) {
+    return { price: cachedSolPrice.price, updatedAt: cachedSolPrice.updatedAt };
+  }
+
+  const price = await getSolPriceInUSD();
+  cachedSolPrice = { price, updatedAt: now };
+  return { price, updatedAt: now };
+};
+
 // Build a SOL transfer transaction (unsigned).
 // The mobile app must sign it with the user's wallet.
 export const buildTransferTransaction = async (

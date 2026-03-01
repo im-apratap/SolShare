@@ -16,6 +16,7 @@ import { Button } from "../../src/components/Button";
 import { colors } from "../../src/theme/colors";
 import { apiClient } from "../../src/api/client";
 import { FontAwesome5 } from "@expo/vector-icons";
+import { useSolPrice } from "../../src/hooks/useSolPrice";
 
 type TabType = "expenses" | "balances" | "members";
 
@@ -27,6 +28,7 @@ export default function GroupDetailsScreen() {
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<TabType>("expenses");
   const [currentUserId, setCurrentUserId] = useState<string>("");
+  const { solPrice } = useSolPrice();
 
   const fetchGroupData = React.useCallback(async () => {
     try {
@@ -171,16 +173,23 @@ export default function GroupDetailsScreen() {
     return (
       <View style={styles.balanceRow}>
         <Text style={styles.balanceName}>{item.user?.name || "Unknown"}</Text>
-        <Text
-          style={[
-            styles.balanceAmount,
-            balance > 0 ? styles.balancePositive : styles.balanceNegative,
-            balance === 0 && styles.balanceZero,
-          ]}
-        >
-          {balance > 0 ? "+" : ""}
-          {balance.toFixed(2)}
-        </Text>
+        <View style={{ alignItems: "flex-end" }}>
+          <Text
+            style={[
+              styles.balanceAmount,
+              balance > 0 ? styles.balancePositive : styles.balanceNegative,
+              balance === 0 && styles.balanceZero,
+            ]}
+          >
+            {balance > 0 ? "+" : ""}
+            {balance.toFixed(2)} USD
+          </Text>
+          {solPrice !== null && balance !== 0 && (
+            <Text style={styles.balanceSolSubtext}>
+              ~ {Math.abs(balance / solPrice).toFixed(4)} SOL
+            </Text>
+          )}
+        </View>
       </View>
     );
   };
@@ -428,6 +437,12 @@ const styles = StyleSheet.create({
   },
   balanceZero: {
     color: colors.textMuted,
+  },
+  balanceSolSubtext: {
+    fontSize: 12,
+    color: colors.textMuted,
+    marginTop: 2,
+    fontWeight: "600",
   },
   membersCard: {
     padding: 20,

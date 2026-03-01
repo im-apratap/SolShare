@@ -17,6 +17,7 @@ import { apiClient } from "../../src/api/client";
 import { FontAwesome5 } from "@expo/vector-icons";
 import { Picker } from "@react-native-picker/picker";
 import { signTransactionOnDevice, openSolscanTx } from "../../src/utils/solana";
+import { useSolPrice } from "../../src/hooks/useSolPrice";
 
 export default function CreateSettlementScreen() {
   const { groupId } = useLocalSearchParams();
@@ -30,6 +31,9 @@ export default function CreateSettlementScreen() {
   const [successModal, setSuccessModal] = useState(false);
   const [txSignature, setTxSignature] = useState<string | null>(null);
   const [settledAmount, setSettledAmount] = useState<string>("");
+  const [settledSolAmount, setSettledSolAmount] = useState<string>("");
+  const [settledRate, setSettledRate] = useState<string>("");
+  const { solPrice } = useSolPrice();
 
   const fetchData = React.useCallback(async () => {
     try {
@@ -128,6 +132,11 @@ export default function CreateSettlementScreen() {
       const signature = submitRes.data.data.txSignature;
       setTxSignature(signature);
       setSettledAmount(amount);
+      if (solPrice) {
+        const solAmt = Number(amount) / solPrice;
+        setSettledSolAmount(solAmt.toFixed(6));
+        setSettledRate(solPrice.toFixed(2));
+      }
       setSuccessModal(true);
     } catch (err: any) {
       setError(
@@ -161,17 +170,35 @@ export default function CreateSettlementScreen() {
         <View style={styles.modalOverlay}>
           <View style={styles.modalContent}>
             <View style={styles.successIconContainer}>
-              <FontAwesome5 name="check-circle" size={64} color={colors.success} />
+              <FontAwesome5
+                name="check-circle"
+                size={64}
+                color={colors.success}
+              />
             </View>
             <Text style={styles.successTitle}>Payment Sent!</Text>
             <Text style={styles.successSubtitle}>
               Successfully settled ${settledAmount} on Solana
             </Text>
-            
+
+            {settledSolAmount !== "" && (
+              <View style={styles.solAmountBadge}>
+                <FontAwesome5 name="coins" size={14} color={colors.secondary} />
+                <Text style={styles.solAmountText}>{settledSolAmount} SOL</Text>
+                {settledRate !== "" && (
+                  <Text style={styles.solRateText}>at ${settledRate}/SOL</Text>
+                )}
+              </View>
+            )}
+
             {txSignature && (
               <View style={styles.txInfoContainer}>
                 <Text style={styles.txLabel}>Transaction Signature</Text>
-                <Text style={styles.txSignature} numberOfLines={1} ellipsizeMode="middle">
+                <Text
+                  style={styles.txSignature}
+                  numberOfLines={1}
+                  ellipsizeMode="middle"
+                >
                   {txSignature}
                 </Text>
               </View>
@@ -249,6 +276,23 @@ export default function CreateSettlementScreen() {
             onChangeText={setAmount}
             keyboardType="decimal-pad"
           />
+
+          {amount !== "" &&
+            !isNaN(Number(amount)) &&
+            Number(amount) > 0 &&
+            solPrice !== null && (
+              <View style={styles.conversionPreview}>
+                <FontAwesome5
+                  name="exchange-alt"
+                  size={12}
+                  color={colors.secondary}
+                />
+                <Text style={styles.conversionText}>
+                  = {(Number(amount) / solPrice).toFixed(6)} SOL at $
+                  {solPrice.toFixed(2)}/SOL
+                </Text>
+              </View>
+            )}
 
           <Button
             title="Sign & Send via Solana"
@@ -415,5 +459,42 @@ const styles = StyleSheet.create({
   },
   doneButton: {
     width: "100%",
+  },
+  conversionPreview: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: "rgba(153, 69, 255, 0.1)",
+    paddingVertical: 10,
+    paddingHorizontal: 16,
+    borderRadius: 12,
+    marginTop: 12,
+    marginBottom: 16,
+  },
+  conversionText: {
+    marginLeft: 8,
+    color: colors.secondary,
+    fontSize: 14,
+    fontWeight: "600",
+  },
+  solAmountBadge: {
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: "rgba(20, 241, 149, 0.1)",
+    paddingVertical: 8,
+    paddingHorizontal: 16,
+    borderRadius: 20,
+    marginBottom: 20,
+  },
+  solAmountText: {
+    fontSize: 18,
+    fontWeight: "700",
+    color: colors.success,
+    marginLeft: 8,
+  },
+  solRateText: {
+    fontSize: 12,
+    color: colors.textMuted,
+    marginLeft: 8,
   },
 });

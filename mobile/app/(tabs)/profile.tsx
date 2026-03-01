@@ -15,12 +15,15 @@ import { apiClient, clearTokens } from "../../src/api/client";
 import { FontAwesome5 } from "@expo/vector-icons";
 import { router } from "expo-router";
 import { connectWallet } from "../../src/utils/solana";
+import { useSolPrice } from "../../src/hooks/useSolPrice";
 
 export default function ProfileScreen() {
   const [user, setUser] = useState<any>(null);
   const [balance, setBalance] = useState<string | null>(null);
+  const [balanceRaw, setBalanceRaw] = useState<number | null>(null);
   const [loading, setLoading] = useState(true);
   const [checkingBalance, setCheckingBalance] = useState(false);
+  const { solPrice } = useSolPrice();
 
   useEffect(() => {
     fetchProfile();
@@ -41,7 +44,9 @@ export default function ProfileScreen() {
     try {
       setCheckingBalance(true);
       const balanceRes = await apiClient.get("/settlements/balance");
-      setBalance(`${balanceRes.data.data.balance.toFixed(4)} SOL`);
+      const solBalance = balanceRes.data.data.balance;
+      setBalanceRaw(solBalance);
+      setBalance(`${solBalance.toFixed(4)} SOL`);
     } catch {
       setBalance("Failed to load");
       Alert.alert("Error", "Could not fetch balance from Solana network.");
@@ -147,6 +152,11 @@ export default function ProfileScreen() {
                 <>
                   <Text style={styles.walletLabel}>Current Balance</Text>
                   <Text style={styles.balanceAmount}>{balance}</Text>
+                  {balanceRaw !== null && solPrice !== null && (
+                    <Text style={styles.balanceUsd}>
+                      ~ ${(balanceRaw * solPrice).toFixed(2)} USD
+                    </Text>
+                  )}
                 </>
               )}
             </View>
@@ -242,6 +252,12 @@ const styles = StyleSheet.create({
     color: colors.secondary,
     fontSize: 20,
     fontWeight: "800",
+  },
+  balanceUsd: {
+    color: colors.textMuted,
+    fontSize: 14,
+    fontWeight: "600",
+    marginTop: 4,
   },
   checkBalanceBtn: {
     marginTop: 4,
