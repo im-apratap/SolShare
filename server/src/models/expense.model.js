@@ -35,6 +35,10 @@ const expenseSchema = mongoose.Schema(
         amount: Number,
       },
     ],
+    currency: {
+      type: String,
+      default: "USD",
+    },
   },
   { timestamps: true },
 );

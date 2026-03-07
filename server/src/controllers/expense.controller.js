@@ -7,10 +7,18 @@ import { ApiError } from "../utils/ApiError.js";
 import { ApiResponse } from "../utils/ApiResponse.js";
 import { Expo } from "expo-server-sdk";
 import { sendPushNotifications } from "../utils/notifications.js";
+import { getCachedExchangeRates } from "../utils/solana.js";
 export const addExpense = async (req, res, next) => {
   try {
-    const { description, amount, groupId, splitType, splitAmong, shares } =
-      req.body;
+    let {
+      description,
+      amount,
+      groupId,
+      splitType,
+      splitAmong,
+      shares,
+      currency,
+    } = req.body;
     if (!description || !amount || !groupId) {
       throw new ApiError(400, "Description, amount, and groupId are required");
     }
@@ -40,6 +48,20 @@ export const addExpense = async (req, res, next) => {
         throw new ApiError(400, "Percentage shares must add up to 100");
       }
     }
+
+    if (currency && currency.toUpperCase() === "INR") {
+      const { rates } = await getCachedExchangeRates();
+      const inrToUsdRate = rates.usd / rates.inr;
+      amount = amount * inrToUsdRate;
+
+      if (splitType === "custom" && shares) {
+        shares = shares.map((s) => ({
+          ...s,
+          amount: s.amount * inrToUsdRate,
+        }));
+      }
+    }
+
     const expense = await Expense.create({
       description,
       amount,
@@ -48,6 +70,7 @@ export const addExpense = async (req, res, next) => {
       splitType: splitType || "equal",
       splitAmong: participants,
       shares: shares || [],
+      currency: "USD",
     });
     const populatedExpense = await Expense.findById(expense._id)
       .populate("paidBy", "name username pubKey")
@@ -357,7 +380,7 @@ export const updateExpense = async (req, res, next) => {
       .populate("shares.user", "name username pubKey");
     await History.create({
       user: req.user._id,
-      actionType: "EXPENSE_ADDED", 
+      actionType: "EXPENSE_ADDED",
       group: group._id,
       description: `You edited expense "${updatedExpense.description}" (${updatedExpense.amount}) in "${group.name}"`,
     });

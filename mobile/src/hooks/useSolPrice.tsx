@@ -8,20 +8,23 @@ import React, {
   ReactNode,
 } from "react";
 import { apiClient } from "../api/client";
-const POLL_INTERVAL_MS = 30_000; 
+const POLL_INTERVAL_MS = 30_000;
 type SolPriceState = {
   solPrice: number | null;
+  solPriceINR: number | null;
   loading: boolean;
   lastUpdated: Date | null;
 };
 const SolPriceContext = createContext<SolPriceState>({
   solPrice: null,
+  solPriceINR: null,
   loading: true,
   lastUpdated: null,
 });
 export const SolPriceProvider = ({ children }: { children: ReactNode }) => {
   const [state, setState] = useState<SolPriceState>({
     solPrice: null,
+    solPriceINR: null,
     loading: true,
     lastUpdated: null,
   });
@@ -29,9 +32,10 @@ export const SolPriceProvider = ({ children }: { children: ReactNode }) => {
   const fetchPrice = useCallback(async () => {
     try {
       const res = await apiClient.get("/settlements/sol-price");
-      const { priceUSD, updatedAt } = res.data.data;
+      const { priceUSD, priceINR, updatedAt } = res.data.data;
       setState({
         solPrice: priceUSD,
+        solPriceINR: priceINR,
         loading: false,
         lastUpdated: new Date(updatedAt),
       });

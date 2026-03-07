@@ -21,7 +21,7 @@ export default function HomeScreen() {
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState("");
-  const { solPrice, loading: priceLoading } = useSolPrice();
+  const { solPrice, solPriceINR, loading: priceLoading } = useSolPrice();
   const fetchData = async () => {
     try {
       setError("");
@@ -96,12 +96,12 @@ export default function HomeScreen() {
               <FontAwesome5 name="coins" size={16} color={colors.secondary} />
             </View>
             <View>
-              <Text style={styles.priceBannerLabel}>SOL / USD</Text>
-              {priceLoading || solPrice === null ? (
+              <Text style={styles.priceBannerLabel}>EXCHANGE RATES</Text>
+              {priceLoading || solPrice === null || solPriceINR === null ? (
                 <ActivityIndicator size="small" color={colors.secondary} />
               ) : (
                 <Text style={styles.priceBannerValue}>
-                  ${solPrice.toFixed(2)}
+                  1 SOL = ${solPrice.toFixed(2)} = ₹{solPriceINR.toFixed(2)}
                 </Text>
               )}
             </View>
@@ -185,7 +185,7 @@ const styles = StyleSheet.create({
   greetingTitle: {
     fontSize: 28,
     fontWeight: "800",
-    color: colors.primary, 
+    color: colors.primary,
     letterSpacing: -0.5,
   },
   greetingSubtitle: {
@@ -229,10 +229,10 @@ const styles = StyleSheet.create({
     fontWeight: "600",
   },
   priceBannerValue: {
-    fontSize: 20,
+    fontSize: 16,
     fontWeight: "800",
     color: colors.primary,
-    marginTop: 1,
+    marginTop: 2,
   },
   priceBannerBadge: {
     flexDirection: "row",
@@ -286,7 +286,7 @@ const styles = StyleSheet.create({
     paddingBottom: 40,
   },
   groupCard: {
-    padding: 16, 
+    padding: 16,
   },
   groupCardImagePlaceholder: {
     backgroundColor: colors.surfaceLight,
@@ -317,11 +317,11 @@ const styles = StyleSheet.create({
   floatingArrowBtn: {
     width: 48,
     height: 48,
-    borderRadius: 24, 
+    borderRadius: 24,
     paddingHorizontal: 0,
     paddingVertical: 0,
     marginVertical: 0,
-    minHeight: 0, 
+    minHeight: 0,
   },
   iconOverlay: {
     position: "absolute",

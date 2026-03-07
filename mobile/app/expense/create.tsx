@@ -22,6 +22,7 @@ export default function CreateExpenseScreen() {
   const { groupId } = useLocalSearchParams();
   const [description, setDescription] = useState("");
   const [amount, setAmount] = useState("");
+  const [currency, setCurrency] = useState("USD");
   const [splitType, setSplitType] = useState("equal");
   const [members, setMembers] = useState<any[]>([]);
   const [shares, setShares] = useState<{ [key: string]: string }>({});
@@ -67,6 +68,7 @@ export default function CreateExpenseScreen() {
         groupId,
         description,
         amount: Number(amount),
+        currency,
         splitType,
         shares: sharesPayload.length > 0 ? sharesPayload : undefined,
       });
@@ -96,7 +98,7 @@ export default function CreateExpenseScreen() {
     try {
       const photo = await cameraRef.current.takePictureAsync({
         quality: 0.5,
-        base64: false, 
+        base64: false,
       });
       if (!photo?.uri) throw new Error("Failed to capture image");
       const manipulated = await ImageManipulator.manipulateAsync(
@@ -111,10 +113,16 @@ export default function CreateExpenseScreen() {
       const response = await apiClient.post("/bill/scan", {
         image: `data:image/jpeg;base64,${manipulated.base64}`,
       });
-      const { description: scannedDesc, totalAmount } = response.data.data;
+      const {
+        description: scannedDesc,
+        totalAmount,
+        currency: scannedCurrency,
+      } = response.data.data;
       if (scannedDesc) setDescription(scannedDesc);
       if (totalAmount !== undefined && totalAmount !== null)
         setAmount(totalAmount.toString());
+      if (scannedCurrency) setCurrency(scannedCurrency.toUpperCase());
+
       setIsCameraActive(false);
     } catch (err: any) {
       setError(
@@ -148,10 +156,15 @@ export default function CreateExpenseScreen() {
         const response = await apiClient.post("/bill/scan", {
           image: `data:image/jpeg;base64,${manipulated.base64}`,
         });
-        const { description: scannedDesc, totalAmount } = response.data.data;
+        const {
+          description: scannedDesc,
+          totalAmount,
+          currency: scannedCurrency,
+        } = response.data.data;
         if (scannedDesc) setDescription(scannedDesc);
         if (totalAmount !== undefined && totalAmount !== null)
           setAmount(totalAmount.toString());
+        if (scannedCurrency) setCurrency(scannedCurrency.toUpperCase());
       }
     } catch (err: any) {
       setError(
@@ -248,13 +261,31 @@ export default function CreateExpenseScreen() {
             value={description}
             onChangeText={setDescription}
           />
-          <Input
-            label="Amount (in USD)"
-            placeholder="0.00"
-            value={amount}
-            onChangeText={setAmount}
-            keyboardType="decimal-pad"
-          />
+          <View style={styles.amountContainer}>
+            <View style={styles.amountInputWrapper}>
+              <Input
+                label="Amount"
+                placeholder="0.00"
+                value={amount}
+                onChangeText={setAmount}
+                keyboardType="decimal-pad"
+                containerStyle={{ marginBottom: 0 }}
+              />
+            </View>
+            <View style={styles.currencySelectWrapper}>
+              <Text style={styles.pickerLabel}>Currency</Text>
+              <View style={styles.currencyPicker}>
+                <Picker
+                  selectedValue={currency}
+                  onValueChange={(itemValue) => setCurrency(itemValue)}
+                  dropdownIconColor={colors.primary}
+                >
+                  <Picker.Item label="USD ($)" value="USD" />
+                  <Picker.Item label="INR (₹)" value="INR" />
+                </Picker>
+              </View>
+            </View>
+          </View>
           <View style={styles.pickerContainer}>
             <Text style={styles.pickerLabel}>Split Option</Text>
             <View style={styles.pickerWrapper}>
@@ -338,6 +369,27 @@ const styles = StyleSheet.create({
     justifyContent: "space-between",
     marginBottom: 24,
   },
+  amountContainer: {
+    flexDirection: "row",
+    alignItems: "flex-end",
+    marginBottom: 16,
+    gap: 12,
+  },
+  amountInputWrapper: {
+    flex: 2,
+  },
+  currencySelectWrapper: {
+    flex: 1,
+    marginBottom: 4,
+  },
+  currencyPicker: {
+    backgroundColor: colors.surfaceLight,
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: colors.border,
+    height: 56,
+    justifyContent: "center",
+  },
   aiButtonHalf: {
     flex: 1,
     marginHorizontal: 4,
@@ -363,7 +415,7 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
-    backgroundColor: "rgba(153, 69, 255, 0.1)", 
+    backgroundColor: "rgba(153, 69, 255, 0.1)",
     padding: 12,
     borderRadius: 12,
     marginBottom: 24,
@@ -487,7 +539,7 @@ const styles = StyleSheet.create({
     borderRadius: 16,
     borderWidth: 1,
     borderColor: colors.border,
-    overflow: "hidden", 
+    overflow: "hidden",
   },
   picker: {
     height: 56,

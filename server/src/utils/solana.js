@@ -5,18 +5,19 @@ import {
   SystemProgram,
   clusterApiUrl,
   TransactionInstruction,
-} from "@solana/web3.js";
+  getCachedExchangeRates,
+} from "../utils/solana.js";
 const MEMO_PROGRAM_ID = new PublicKey(
   "MemoSq4gqABAXKb96qnH8TysNcWxMyWCqXgDLGmfcQb",
 );
 const network = process.env.SOLANA_NETWORK || "devnet";
 const connection = new Connection(clusterApiUrl(network), "confirmed");
-export const getSolPriceInUSD = async () => {
+export const getExchangeRates = async () => {
   try {
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), 5000);
     const response = await fetch(
-      "https://api.coingecko.com/api/v3/simple/price?ids=solana&vs_currencies=usd",
+      "https://api.coingecko.com/api/v3/simple/price?ids=solana&vs_currencies=usd,inr",
       { signal: controller.signal },
     );
     clearTimeout(timeoutId);
@@ -25,26 +26,32 @@ export const getSolPriceInUSD = async () => {
       throw new Error(`HTTP error! status: ${response.status}`);
     }
     const data = await response.json();
-    return parseFloat(data.solana.usd);
+    return {
+      usd: parseFloat(data.solana.usd),
+      inr: parseFloat(data.solana.inr),
+    };
   } catch (error) {
     console.error("Error fetching SOL price:", error);
-    return 150.0;
+    return { usd: 150.0, inr: 12500.0 }; // Fallback values
   }
 };
-let cachedSolPrice = { price: null, updatedAt: null };
+let cachedExchangeRates = { rates: null, updatedAt: null };
 const CACHE_TTL_MS = 30_000;
-export const getCachedSolPriceInUSD = async () => {
+export const getCachedExchangeRates = async () => {
   const now = Date.now();
   if (
-    cachedSolPrice.price !== null &&
-    cachedSolPrice.updatedAt !== null &&
-    now - cachedSolPrice.updatedAt < CACHE_TTL_MS
+    cachedExchangeRates.rates !== null &&
+    cachedExchangeRates.updatedAt !== null &&
+    now - cachedExchangeRates.updatedAt < CACHE_TTL_MS
   ) {
-    return { price: cachedSolPrice.price, updatedAt: cachedSolPrice.updatedAt };
+    return {
+      rates: cachedExchangeRates.rates,
+      updatedAt: cachedExchangeRates.updatedAt,
+    };
   }
-  const price = await getSolPriceInUSD();
-  cachedSolPrice = { price, updatedAt: now };
-  return { price, updatedAt: now };
+  const rates = await getExchangeRates();
+  cachedExchangeRates = { rates, updatedAt: now };
+  return { rates, updatedAt: now };
 };
 export const buildTransferTransaction = async (
   fromPubkey,

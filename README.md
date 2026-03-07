@@ -5,9 +5,9 @@ SolShare is a mobile-first application natively built on the Solana blockchain u
 ## Features
 
 - **Mobile Foundation First**: Built natively using React Native and Expo. Seamlessly interacts with mobile hardware and Solana Mobile Stack features directly designed for smartphones.
-- **Smart AI Receipt Scanner**: Integration with Gemini AI allows users to instantly take a picture of a bill with their camera and dynamically prefill the expense title and split amount.
+- **Smart AI Receipt Scanner**: Integration with Gemini AI allows users to instantly take a picture of a bill with their camera and dynamically prefill the expense title, extracted currency (e.g., INR or USD), and total split amount.
 - **On-chain Settlements & MWA Interface**: Instantly connect your phone's crypto wallet using the Solana MWA. Settle debts permissionlessly on the Solana network with full transaction verification.
-- **Real-Time Price Context**: Pulls the live price of SOL/USD on a scalable caching backend to give users immediate feedback on exact crypto equivalents of fiat debts.
+- **Real-Time Price Context**: Pulls the live price of SOL/USD and SOL/INR concurrently on a scalable caching backend to give users immediate feedback on exact crypto equivalents of fiat debts.
 - **Full Backend Logic**: Custom Node.js Express server to handle robust group coordination, user profile matching, historical activity fetching, and push notifications.
 
 ## Tech Stack

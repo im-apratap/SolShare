@@ -11,8 +11,8 @@ import {
   verifyTransaction,
   getBalance,
   connection,
-  getSolPriceInUSD,
-  getCachedSolPriceInUSD,
+  getExchangeRates,
+  getCachedExchangeRates,
 } from "../utils/solana.js";
 import { Expo } from "expo-server-sdk";
 import { sendPushNotifications } from "../utils/notifications.js";
@@ -149,7 +149,8 @@ export const createSettlement = async (req, res, next) => {
     if (!userPubKey) {
       throw new ApiError(400, "Your wallet public key is not set");
     }
-    const solPrice = await getSolPriceInUSD();
+    const exchangeRates = await getExchangeRates();
+    const solPrice = exchangeRates.usd;
     const balance = await getBalance(userPubKey);
     const totalOweUSD = userSettlements.reduce((sum, s) => sum + s.amount, 0);
     const totalOweSOL = totalOweUSD / solPrice;
@@ -163,7 +164,7 @@ export const createSettlement = async (req, res, next) => {
       const amountInSOL = s.amount / solPrice;
       return {
         toPubkey: memberMap[s.to].pubKey,
-        amountInSOL: Math.max(0.000000001, amountInSOL), 
+        amountInSOL: Math.max(0.000000001, amountInSOL),
         toUser: memberMap[s.to],
       };
     });
@@ -398,14 +399,14 @@ export const getWalletBalance = async (req, res, next) => {
 };
 export const getSolPrice = async (req, res, next) => {
   try {
-    const { price, updatedAt } = await getCachedSolPriceInUSD();
+    const { rates, updatedAt } = await getCachedExchangeRates();
     return res
       .status(200)
       .json(
         new ApiResponse(
           200,
-          { priceUSD: price, updatedAt },
-          "SOL price fetched",
+          { priceUSD: rates.usd, priceINR: rates.inr, updatedAt },
+          "SOL prices fetched",
         ),
       );
   } catch (error) {
