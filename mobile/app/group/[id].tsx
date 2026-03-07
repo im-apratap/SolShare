@@ -17,6 +17,7 @@ import { colors } from "../../src/theme/colors";
 import { apiClient } from "../../src/api/client";
 import { FontAwesome5 } from "@expo/vector-icons";
 import { useSolPrice } from "../../src/hooks/useSolPrice";
+import { useCurrencyPreference } from "../../src/hooks/useCurrencyPreference";
 type TabType = "expenses" | "balances" | "members";
 export default function GroupDetailsScreen() {
   const { id } = useLocalSearchParams();
@@ -26,7 +27,8 @@ export default function GroupDetailsScreen() {
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<TabType>("expenses");
   const [currentUserId, setCurrentUserId] = useState<string>("");
-  const { solPrice } = useSolPrice();
+  const { solPrice, solPriceINR } = useSolPrice();
+  const { formatFiatFromUSD } = useCurrencyPreference();
   const fetchGroupData = React.useCallback(async () => {
     try {
       setLoading(true);
@@ -142,7 +144,11 @@ export default function GroupDetailsScreen() {
               }}
             >
               <Text style={styles.expenseAmount}>
-                ${item.amount.toFixed(2)}
+                {formatFiatFromUSD(
+                  item.amount,
+                  solPrice || 1,
+                  solPriceINR || 1,
+                )}
               </Text>
               <FontAwesome5
                 name="chevron-right"
@@ -170,7 +176,11 @@ export default function GroupDetailsScreen() {
             ]}
           >
             {balance > 0 ? "+" : ""}
-            {balance.toFixed(2)} USD
+            {formatFiatFromUSD(
+              Math.abs(balance),
+              solPrice || 1,
+              solPriceINR || 1,
+            )}
           </Text>
           {solPrice !== null && balance !== 0 && (
             <Text style={styles.balanceSolSubtext}>
@@ -298,7 +308,7 @@ const styles = StyleSheet.create({
     justifyContent: "space-between",
     paddingVertical: 16,
     paddingHorizontal: 16,
-    backgroundColor: colors.background, 
+    backgroundColor: colors.background,
   },
   backBtn: {
     padding: 12,
@@ -457,7 +467,7 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     padding: 16,
     paddingBottom: Platform.OS === "ios" ? 32 : 16,
-    backgroundColor: colors.background, 
+    backgroundColor: colors.background,
   },
   actionBtn: {
     flex: 1,

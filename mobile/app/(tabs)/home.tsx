@@ -112,17 +112,7 @@ export default function HomeScreen() {
           </View>
         </View>
         {}
-        <View style={styles.filtersContainer}>
-          <View style={[styles.filterPill, styles.filterPillActive]}>
-            <Text style={styles.filterPillTextActive}>Your Groups</Text>
-          </View>
-          <View style={styles.filterPill}>
-            <Text style={styles.filterPillText}>Recent</Text>
-          </View>
-          <View style={styles.filterPill}>
-            <Text style={styles.filterPillText}>Settled</Text>
-          </View>
-        </View>
+        {}
         {error ? (
           <View style={styles.errorContainer}>
             <Text style={styles.errorText}>{error}</Text>
@@ -254,33 +244,6 @@ const styles = StyleSheet.create({
     fontWeight: "700",
     color: colors.success,
     letterSpacing: 1,
-  },
-  filtersContainer: {
-    flexDirection: "row",
-    marginBottom: 24,
-  },
-  filterPill: {
-    paddingVertical: 10,
-    paddingHorizontal: 20,
-    borderRadius: 999,
-    backgroundColor: colors.surface,
-    marginRight: 12,
-    borderWidth: 1,
-    borderColor: colors.border,
-  },
-  filterPillActive: {
-    backgroundColor: colors.primary,
-    borderColor: colors.primary,
-  },
-  filterPillText: {
-    color: colors.textMuted,
-    fontWeight: "600",
-    fontSize: 14,
-  },
-  filterPillTextActive: {
-    color: "#FFFFFF",
-    fontWeight: "600",
-    fontSize: 14,
   },
   listContent: {
     paddingBottom: 40,

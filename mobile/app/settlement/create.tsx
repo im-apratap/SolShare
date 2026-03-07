@@ -18,6 +18,7 @@ import { FontAwesome5 } from "@expo/vector-icons";
 import { Picker } from "@react-native-picker/picker";
 import { signTransactionOnDevice, openSolscanTx } from "../../src/utils/solana";
 import { useSolPrice } from "../../src/hooks/useSolPrice";
+import { useCurrencyPreference } from "../../src/hooks/useCurrencyPreference";
 export default function CreateSettlementScreen() {
   const { groupId } = useLocalSearchParams();
   const [toUserId, setToUserId] = useState("");
@@ -32,7 +33,10 @@ export default function CreateSettlementScreen() {
   const [settledAmount, setSettledAmount] = useState<string>("");
   const [settledSolAmount, setSettledSolAmount] = useState<string>("");
   const [settledRate, setSettledRate] = useState<string>("");
-  const { solPrice } = useSolPrice();
+  const { solPrice, solPriceINR } = useSolPrice();
+  const { preferredCurrency, getCurrencySymbol, formatFiatFromUSD } =
+    useCurrencyPreference();
+
   const fetchData = React.useCallback(async () => {
     try {
       const userRes = await apiClient.get("/users/me");
@@ -67,12 +71,16 @@ export default function CreateSettlementScreen() {
         (s) => s.from._id === toUserId && s.to._id === currentUserId,
       );
       if (oweThem) {
-        setAmount(oweThem.amount.toString());
-        setError(""); 
+        const displayAmt =
+          preferredCurrency === "INR" && solPrice && solPriceINR
+            ? (oweThem.amount * (solPriceINR / solPrice)).toFixed(2)
+            : oweThem.amount.toString();
+        setAmount(displayAmt);
+        setError("");
       } else if (theyOwe) {
         setAmount("0");
         setError(
-          `You don't owe them. They actually owe you $${theyOwe.amount.toFixed(2)}.`,
+          `You don't owe them. They actually owe you ${formatFiatFromUSD(theyOwe.amount, solPrice || 1, solPriceINR || 1)}.`,
         );
       } else {
         setAmount("0");
@@ -91,10 +99,16 @@ export default function CreateSettlementScreen() {
     setLoading(true);
     setError("");
     try {
+      const numericAmount = Number(amount);
+      const usdAmount =
+        preferredCurrency === "INR" && solPrice && solPriceINR
+          ? numericAmount / (solPriceINR / solPrice)
+          : numericAmount;
+
       const res = await apiClient.post("/settlements/create", {
         groupId,
         toUserId,
-        amount: Number(amount),
+        amount: usdAmount,
       });
       const { serializedTransaction, settlements } = res.data.data;
       if (!serializedTransaction) {
@@ -111,7 +125,7 @@ export default function CreateSettlementScreen() {
       setTxSignature(signature);
       setSettledAmount(amount);
       if (solPrice) {
-        const solAmt = Number(amount) / solPrice;
+        const solAmt = usdAmount / solPrice;
         setSettledSolAmount(solAmt.toFixed(6));
         setSettledRate(solPrice.toFixed(2));
       }
@@ -153,7 +167,8 @@ export default function CreateSettlementScreen() {
             </View>
             <Text style={styles.successTitle}>Payment Sent!</Text>
             <Text style={styles.successSubtitle}>
-              Successfully settled ${settledAmount} on Solana
+              Successfully settled {getCurrencySymbol()}
+              {settledAmount} on Solana
             </Text>
             {settledSolAmount !== "" && (
               <View style={styles.solAmountBadge}>
@@ -235,7 +250,7 @@ export default function CreateSettlementScreen() {
             style={styles.checkButton}
           />
           <Input
-            label="Amount (in USD equivalent)"
+            label={`Amount (in ${preferredCurrency} equivalent)`}
             placeholder="0.00"
             value={amount}
             onChangeText={setAmount}
@@ -339,7 +354,7 @@ const styles = StyleSheet.create({
     borderRadius: 16,
     borderWidth: 1,
     borderColor: colors.border,
-    overflow: "hidden", 
+    overflow: "hidden",
   },
   picker: {
     height: 56,

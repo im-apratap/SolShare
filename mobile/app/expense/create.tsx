@@ -279,6 +279,7 @@ export default function CreateExpenseScreen() {
                   selectedValue={currency}
                   onValueChange={(itemValue) => setCurrency(itemValue)}
                   dropdownIconColor={colors.primary}
+                  style={styles.picker}
                 >
                   <Picker.Item label="USD ($)" value="USD" />
                   <Picker.Item label="INR (₹)" value="INR" />
@@ -306,7 +307,7 @@ export default function CreateExpenseScreen() {
               <View style={styles.sharesContainer}>
                 <Text style={styles.sharesTitle}>
                   {splitType === "custom"
-                    ? "Enter Custom Amounts ($)"
+                    ? `Enter Custom Amounts (${currency === "INR" ? "₹" : "$"})`
                     : "Enter Percentages (%)"}
                 </Text>
                 {members.map((member) => (

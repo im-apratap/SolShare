@@ -5,12 +5,12 @@
         "projectId": "8da8bf68-80df-4f01-90a6-160cb3c20c02"
       }
     },
-    "name": "mobile",
-    "slug": "mobile",
+    "name": "SolShare",
+    "slug": "solshare",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
-    "scheme": "mobile",
+    "scheme": "solshare",
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
     "ios": {

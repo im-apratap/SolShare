@@ -13,6 +13,7 @@ import { Button } from "../../../src/components/Button";
 import { Picker } from "@react-native-picker/picker";
 import { colors } from "../../../src/theme/colors";
 import { apiClient } from "../../../src/api/client";
+import { useCurrencyPreference } from "../../../src/hooks/useCurrencyPreference";
 export default function EditExpenseScreen() {
   const { id } = useLocalSearchParams();
   const [loading, setLoading] = useState(true);
@@ -23,6 +24,8 @@ export default function EditExpenseScreen() {
   const [splitType, setSplitType] = useState("equal");
   const [members, setMembers] = useState<any[]>([]);
   const [shares, setShares] = useState<{ [key: string]: string }>({});
+  const { getCurrencySymbol, preferredCurrency } = useCurrencyPreference();
+
   const fetchExpenseDetails = useCallback(async () => {
     try {
       setLoading(true);
@@ -110,7 +113,7 @@ export default function EditExpenseScreen() {
             onChangeText={setDescription}
           />
           <Input
-            label="Amount (in USD)"
+            label={`Amount (in ${preferredCurrency})`}
             placeholder="0.00"
             value={amount}
             onChangeText={setAmount}
@@ -136,7 +139,7 @@ export default function EditExpenseScreen() {
               <View style={styles.sharesContainer}>
                 <Text style={styles.sharesTitle}>
                   {splitType === "custom"
-                    ? "Enter Custom Amounts ($)"
+                    ? `Enter Custom Amounts (${getCurrencySymbol()})`
                     : "Enter Percentages (%)"}
                 </Text>
                 {members.map((member) => (

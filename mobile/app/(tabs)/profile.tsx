@@ -6,6 +6,7 @@ import {
   ActivityIndicator,
   Alert,
   Platform,
+  TouchableOpacity,
 } from "react-native";
 import { Container } from "../../src/components/Container";
 import { Card } from "../../src/components/Card";
@@ -16,13 +17,16 @@ import { FontAwesome5 } from "@expo/vector-icons";
 import { router } from "expo-router";
 import { connectWallet } from "../../src/utils/solana";
 import { useSolPrice } from "../../src/hooks/useSolPrice";
+import { useCurrencyPreference } from "../../src/hooks/useCurrencyPreference";
 export default function ProfileScreen() {
   const [user, setUser] = useState<any>(null);
   const [balance, setBalance] = useState<string | null>(null);
   const [balanceRaw, setBalanceRaw] = useState<number | null>(null);
   const [loading, setLoading] = useState(true);
   const [checkingBalance, setCheckingBalance] = useState(false);
-  const { solPrice } = useSolPrice();
+  const { solPrice, solPriceINR } = useSolPrice();
+  const { preferredCurrency, toggleCurrency, formatFiat } =
+    useCurrencyPreference();
   useEffect(() => {
     fetchProfile();
   }, []);
@@ -61,8 +65,7 @@ export default function ProfileScreen() {
         onPress: async () => {
           try {
             await apiClient.post("/users/logout");
-          } catch {
-          }
+          } catch {}
           await clearTokens();
           router.replace("/(auth)/login");
         },
@@ -142,11 +145,58 @@ export default function ProfileScreen() {
                   <Text style={styles.balanceAmount}>{balance}</Text>
                   {balanceRaw !== null && solPrice !== null && (
                     <Text style={styles.balanceUsd}>
-                      ~ ${(balanceRaw * solPrice).toFixed(2)} USD
+                      ~ {formatFiat(balanceRaw, solPrice, solPriceINR || 0)}
                     </Text>
                   )}
                 </>
               )}
+            </View>
+          </View>
+        </Card>
+
+        <Text style={styles.sectionTitle}>App Preferences</Text>
+        <Card style={styles.prefCard}>
+          <FontAwesome5
+            name="globe"
+            size={24}
+            color={colors.secondary}
+            style={styles.walletIcon}
+          />
+          <View style={styles.prefInfo}>
+            <Text style={styles.walletLabel}>Display Currency</Text>
+            <View style={styles.currencyToggleGroup}>
+              <TouchableOpacity
+                style={[
+                  styles.segmentBtn,
+                  preferredCurrency === "USD" && styles.segmentBtnActive,
+                ]}
+                onPress={() => toggleCurrency("USD")}
+              >
+                <Text
+                  style={[
+                    styles.segmentText,
+                    preferredCurrency === "USD" && styles.segmentTextActive,
+                  ]}
+                >
+                  USD ($)
+                </Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[
+                  styles.segmentBtn,
+                  preferredCurrency === "INR" && styles.segmentBtnActive,
+                ]}
+                onPress={() => toggleCurrency("INR")}
+              >
+                <Text
+                  style={[
+                    styles.segmentText,
+                    preferredCurrency === "INR" && styles.segmentTextActive,
+                  ]}
+                >
+                  INR (₹)
+                </Text>
+              </TouchableOpacity>
             </View>
           </View>
         </Card>
@@ -187,7 +237,7 @@ const styles = StyleSheet.create({
   name: {
     fontSize: 24,
     fontWeight: "800",
-    color: colors.primary, 
+    color: colors.primary,
   },
   username: {
     fontSize: 16,
@@ -249,5 +299,44 @@ const styles = StyleSheet.create({
   },
   logoutBtn: {
     marginBottom: 16,
+  },
+  prefCard: {
+    flexDirection: "row",
+    alignItems: "center",
+    padding: 16,
+    marginBottom: 24,
+  },
+  prefInfo: {
+    flex: 1,
+  },
+  currencyToggleGroup: {
+    flexDirection: "row",
+    backgroundColor: colors.surfaceLight,
+    borderRadius: 8,
+    padding: 2,
+    marginTop: 8,
+  },
+  segmentBtn: {
+    flex: 1,
+    paddingVertical: 6,
+    alignItems: "center",
+    borderRadius: 6,
+  },
+  segmentBtnActive: {
+    backgroundColor: colors.background,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.1,
+    shadowRadius: 2,
+    elevation: 2,
+  },
+  segmentText: {
+    fontSize: 13,
+    fontWeight: "600",
+    color: colors.textMuted,
+  },
+  segmentTextActive: {
+    color: colors.primary,
+    fontWeight: "800",
   },
 });
