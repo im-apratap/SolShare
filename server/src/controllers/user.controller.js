@@ -13,9 +13,10 @@ const generateAccessAndRefreshToken = async (userId) => {
     await user.save({ validateBeforeSave: false });
     return { accessToken, refreshToken };
   } catch (error) {
+    console.error("[generateAccessAndRefreshToken Error]: ", error);
     throw new ApiError(
       500,
-      "Something went wrong while generating access and refresh token",
+      `Something went wrong while generating access and refresh token: ${error.message}`,
     );
   }
 };
