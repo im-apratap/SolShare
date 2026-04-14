@@ -84,7 +84,12 @@ apiClient.interceptors.response.use(
       try {
         const refreshToken = await AsyncStorage.getItem("refreshToken");
         if (!refreshToken) {
-          throw new Error("No refresh token available");
+          // Instead of throwing a raw error, we clear tokens and reject
+          // This allows the app to handle things more gracefully (e.g. redirect to login)
+          await clearTokens();
+          return Promise.reject(
+            new Error("Session expired. Please log in again."),
+          );
         }
         const res = await axios.post(`${getBaseUrl()}/users/refresh-token`, {
           refreshToken,
@@ -96,10 +101,13 @@ apiClient.interceptors.response.use(
         }
         processQueue(null, accessToken);
         return apiClient(originalRequest);
-      } catch (refreshError) {
+      } catch (refreshError: any) {
         processQueue(refreshError, null);
         await clearTokens();
-        return Promise.reject(refreshError);
+        // Return a more user-friendly error if it's not already one
+        const message =
+          refreshError.response?.data?.message || "Session expired";
+        return Promise.reject(new Error(message));
       } finally {
         isRefreshing = false;
       }

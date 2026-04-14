@@ -7,6 +7,7 @@ import {
   Alert,
   Platform,
   TouchableOpacity,
+  ScrollView,
 } from "react-native";
 import { Container } from "../../src/components/Container";
 import { Card } from "../../src/components/Card";
@@ -95,7 +96,10 @@ export default function ProfileScreen() {
   }
   return (
     <Container>
-      <View style={styles.content}>
+      <ScrollView
+        showsVerticalScrollIndicator={false}
+        contentContainerStyle={styles.scrollContent}
+      >
         <Card style={styles.profileCard}>
           <View style={styles.avatarContainer}>
             <FontAwesome5 name="user-alt" size={40} color={colors.primary} />
@@ -104,6 +108,7 @@ export default function ProfileScreen() {
           <Text style={styles.username}>@{user?.username || "unknown"}</Text>
           <Text style={styles.email}>{user?.email}</Text>
         </Card>
+
         <Text style={styles.sectionTitle}>Wallet Details</Text>
         <Card style={styles.walletCard}>
           <FontAwesome5
@@ -200,21 +205,21 @@ export default function ProfileScreen() {
             </View>
           </View>
         </Card>
-        <View style={{ flex: 1 }} />
+
         <Button
           title="Sign Out"
           onPress={handleLogout}
           style={styles.logoutBtn}
           textStyle={{ fontWeight: "700" }}
         />
-      </View>
+      </ScrollView>
     </Container>
   );
 }
 const styles = StyleSheet.create({
-  content: {
-    flex: 1,
+  scrollContent: {
     padding: 16,
+    paddingBottom: 40,
   },
   centerElement: {
     alignItems: "center",
