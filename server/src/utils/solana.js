@@ -5,12 +5,43 @@ import {
   SystemProgram,
   clusterApiUrl,
   TransactionInstruction,
+  Keypair,
 } from "@solana/web3.js";
+import * as anchor from "@coral-xyz/anchor";
+import fs from "fs";
+import path from "path";
+import bs58 from "bs58";
+import { fileURLToPath } from "url";
 const MEMO_PROGRAM_ID = new PublicKey(
   "MemoSq4gqABAXKb96qnH8TysNcWxMyWCqXgDLGmfcQb",
 );
 const network = process.env.SOLANA_NETWORK || "devnet";
 const connection = new Connection(clusterApiUrl(network), "confirmed");
+
+// --- Anchor Setup ---
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+const idlPath = path.join(__dirname, "sol_share.json");
+const idl = JSON.parse(fs.readFileSync(idlPath, "utf-8"));
+const PROGRAM_ID = new PublicKey(idl.address);
+
+// Backend Wallet (Authority for PDA)
+// In production, this should be a secure key loaded from env
+let serverKeypair;
+if (process.env.SERVER_PRIVATE_KEY) {
+  serverKeypair = Keypair.fromSecretKey(bs58.decode(process.env.SERVER_PRIVATE_KEY));
+} else {
+  // Generate one for dev and warn
+  console.warn("⚠️ No SERVER_PRIVATE_KEY found in env! Generating a temporary keypair for PDA authority...");
+  serverKeypair = Keypair.generate();
+  console.warn(`Server PubKey: ${serverKeypair.publicKey.toString()}`);
+}
+const serverWallet = new anchor.Wallet(serverKeypair);
+const provider = new anchor.AnchorProvider(connection, serverWallet, {
+  preflightCommitment: "confirmed",
+});
+const program = new anchor.Program(idl, provider);
+// --------------------
 export const getExchangeRates = async () => {
   try {
     const controller = new AbortController();
@@ -155,4 +186,75 @@ export const getBalance = async (pubkey) => {
   const balance = await connection.getBalance(new PublicKey(pubkey));
   return balance / 1000000000;
 };
-export { connection };
+
+export const forceSettleGroupExpenses = async (groupId, settlements, memberMap) => {
+  const results = [];
+  
+  const [groupVaultPDA] = PublicKey.findProgramAddressSync(
+    [Buffer.from("group_vault"), Buffer.from(groupId)],
+    PROGRAM_ID
+  );
+
+  for (const settlement of settlements) {
+    try {
+      const debtorPubKey = new PublicKey(memberMap[settlement.from].pubKey);
+      const creditorPubKey = new PublicKey(memberMap[settlement.to].pubKey);
+      
+      const [debtorVaultPDA] = PublicKey.findProgramAddressSync(
+        [Buffer.from("user_vault"), Buffer.from(groupId), debtorPubKey.toBuffer()],
+        PROGRAM_ID
+      );
+      
+      const [creditorVaultPDA] = PublicKey.findProgramAddressSync(
+        [Buffer.from("user_vault"), Buffer.from(groupId), creditorPubKey.toBuffer()],
+        PROGRAM_ID
+      );
+
+      // Check if debtor vault has enough balance before attempting
+      try {
+        const debtorVault = await program.account.userVault.fetch(debtorVaultPDA);
+        const amountLamports = new anchor.BN(Math.round(settlement.amount * 1000000000));
+        
+        if (debtorVault.balance.gte(amountLamports)) {
+          // Force settle using the backend authority
+          const tx = await program.methods
+            .recordExpense(groupId, amountLamports)
+            .accounts({
+              groupVault: groupVaultPDA,
+              userVault: debtorVaultPDA,
+              creditorVault: creditorVaultPDA,
+              debtor: debtorPubKey,
+              creditor: creditorPubKey,
+              authority: serverKeypair.publicKey,
+            })
+            .signers([serverKeypair])
+            .rpc();
+            
+          results.push({
+            settlement,
+            success: true,
+            txSignature: tx
+          });
+        } else {
+          results.push({
+            settlement,
+            success: false,
+            reason: "Insufficient funds in debtor's PDA vault"
+          });
+        }
+      } catch (err) {
+        results.push({
+          settlement,
+          success: false,
+          reason: "Vault uninitialized or error fetching PDA: " + err.message
+        });
+      }
+    } catch (e) {
+      console.error("Error in forceSettleGroupExpenses:", e);
+      results.push({ settlement, success: false, reason: e.message });
+    }
+  }
+  return results;
+};
+
+export { connection, program };

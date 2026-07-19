@@ -46,3 +46,8 @@ expo-env.d.ts
 # Misc caches
 .eslintcache
 .npm/
+
+# Anchor Smart Contract
+anchor/target/
+anchor/.anchor/
+anchor/test-ledger/
