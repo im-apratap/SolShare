@@ -13,6 +13,7 @@ import {
   connection,
   getExchangeRates,
   getCachedExchangeRates,
+  forceSettleGroupExpenses,
 } from "../utils/solana.js";
 import { Expo } from "expo-server-sdk";
 import { sendPushNotifications } from "../utils/notifications.js";
@@ -409,6 +410,70 @@ export const getSolPrice = async (req, res, next) => {
           "SOL prices fetched",
         ),
       );
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const forceSettle = async (req, res, next) => {
+  try {
+    const { groupId } = req.body;
+    if (!groupId) throw new ApiError(400, "groupId is required");
+    
+    const { group, settlements } = await calculateNetBalances(groupId);
+    
+    // We need to convert the settlement amounts to SOL because calculateNetBalances returns USD
+    const exchangeRates = await getExchangeRates();
+    const solPrice = exchangeRates.usd;
+    
+    const settlementsInSOL = settlements.map(s => ({
+      ...s,
+      amount: s.amount / solPrice
+    }));
+    
+    const memberMap = {};
+    group.members.forEach(m => {
+      memberMap[m._id.toString()] = m;
+    });
+    
+    const results = await forceSettleGroupExpenses(groupId, settlementsInSOL, memberMap);
+    
+    // Create history records for successful settlements
+    let successCount = 0;
+    for (const result of results) {
+      if (result.success) {
+        successCount++;
+        const s = result.settlement;
+        await Settlement.create({
+          groupId,
+          from: s.from,
+          to: s.to,
+          amount: s.amount * solPrice,
+          amountInLamports: Math.round(s.amount * 1000000000),
+          status: "confirmed",
+          txSignature: result.txSignature
+        });
+        
+        await History.create({
+          user: s.from,
+          actionType: "SETTLEMENT_CONFIRMED",
+          group: groupId,
+          description: `Smart Contract forced settlement of ${s.amount.toFixed(4)} SOL to ${memberMap[s.to].name}`,
+          txSignature: result.txSignature
+        });
+        await History.create({
+          user: s.to,
+          actionType: "SETTLEMENT_CONFIRMED",
+          group: groupId,
+          description: `Smart Contract forced settlement of ${s.amount.toFixed(4)} SOL from ${memberMap[s.from].name}`,
+          txSignature: result.txSignature
+        });
+      }
+    }
+    
+    return res.status(200).json(
+      new ApiResponse(200, { results }, `Force settlement completed. ${successCount} out of ${results.length} settlements successful.`)
+    );
   } catch (error) {
     next(error);
   }
